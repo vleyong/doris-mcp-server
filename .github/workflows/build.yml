@@ -29,6 +29,10 @@ on:
   
   workflow_dispatch: # 允许在 GitHub 网页上手动点击按钮触发构建，方便调试和测试
 
+env:
+  # 最佳实践：在此定义您基于官方修改的自定义主版本号
+  APP_VERSION: 0.6.0
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -46,14 +50,21 @@ jobs:
           username: ${{ secrets.ALIYUN_REGISTRY_USER }}
           password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
 
+      # 最佳实践：提取 Git 的 7 位短 Commit ID 用于精简美观的版本标签
+      - name: Get short Git SHA
+        id: git_sha
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
+          # 最佳实践：打上三个专业层级的 Tag (通用的 latest, 版本最新, 带有 7位短CommitID 的精准版本)
           tags: |
             ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPOSITORY }}:latest
-            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPOSITORY }}:${{ github.sha }}
+            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPOSITORY }}:${{ env.APP_VERSION }}-latest
+            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/${{ secrets.ALIYUN_REPOSITORY }}:${{ env.APP_VERSION }}-${{ steps.git_sha.outputs.sha_short }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
