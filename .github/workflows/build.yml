@@ -21,6 +21,13 @@ on:
   push:
     branches:
       - master # 触发构建的分支
+    paths-ignore:
+      - '**.md' # 忽略所有 markdown 文档修改，避免更新 README 等触发构建
+      - '.gitignore'
+      - 'LICENSE.txt'
+      - '.asf.yaml'
+  
+  workflow_dispatch: # 允许在 GitHub 网页上手动点击按钮触发构建，方便调试和测试
 
 jobs:
   build-and-push:
